@@ -18,18 +18,18 @@ namespace BlinkyCpp
 
    // ***** Enumeration for the position of the hand on the clock face
    enum PositionState : int {
-      WORK = 0,
-      HOME = 1,
+      LOST = 0,
+      PERIL = 1,
       PARK = 2,
-      BARN = 3,
-      LOST = 4,
-      PERIL = 5,
-      FLORIDA = 6,
-      TEXAS = 7,
-      TRANSIT = 8,
-      HOLIDAY = 9,
-      PUB = 10,
-      GROCERY = 11,
+      TEXAS = 3,
+      HOLIDAY = 4,
+      WORK = 5,
+      TRANSIT = 6,
+      GROCERY = 7,
+      FLORIDA = 8,
+      PUB = 9,
+      BARN = 10,
+      HOME = 11,
       POSITION_MAX = 12
    };
 

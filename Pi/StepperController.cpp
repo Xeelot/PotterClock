@@ -12,7 +12,7 @@ StepperController::StepperController()
       pinValues[i] = Windows::Devices::Gpio::GpioPinValue::Low;
    }
    stepState = StepperState::STEP_OFF;
-   posState = PositionState::WORK;
+   posState = PositionState::LOST;
    initState = InitState::INIT_NONE;
 }
 
