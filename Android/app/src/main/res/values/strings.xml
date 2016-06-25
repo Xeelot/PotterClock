@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">PotterClock</string>
+    <string name="grocery">Grocery</string>
+    <string name="pub">Pub</string>
+    <string name="holiday">Holiday</string>
+    <string name="transit">Transit</string>
+    <string name="texas">Texas</string>
+    <string name="florida">Florida</string>
+    <string name="mortal_peril">Mortal Peril</string>
+    <string name="lost">Lost</string>
+    <string name="barn">Barn</string>
+    <string name="park">Park</string>
+    <string name="home">Home</string>
+    <string name="work">Work</string>
+    <string name="name">Name</string>
+</resources>
