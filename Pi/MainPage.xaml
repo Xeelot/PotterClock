@@ -29,11 +29,16 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Ellipse x:Name="LED" Fill="LightGray" Stroke="White" Width="100" Height="100" Margin="10"/>
-            <TextBlock x:Name="DelayText" Text="500ms" Margin="10" TextAlignment="Center" FontSize="26.667" />
-            <TextBlock x:Name="GpioStatus" Text="Waiting to initialize GPIO..." Margin="10,50,10,10" TextAlignment="Center" FontSize="26.667" />
-        </StackPanel>
-    </Grid>
+   <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" >
+         <Ellipse x:Name="LED1" Fill="LightGray" Stroke="White" Width="100" Height="100" Margin="10"/>
+         <TextBlock x:Name="PositionText1" Text="0" Margin="10" TextAlignment="Center" FontSize="26.667" />
+         <TextBlock x:Name="GpioStatus1" Text="Waiting to initialize GPIO..." Margin="10,50,10,10" TextAlignment="Center" FontSize="26.667" />
+      </StackPanel>
+      <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" >
+         <Ellipse x:Name="LED2" Fill="LightGray" Stroke="White" Width="100" Height="100" Margin="10"/>
+         <TextBlock x:Name="PositionText2" Text="0" Margin="10" TextAlignment="Center" FontSize="26.667" />
+         <TextBlock x:Name="GpioStatus2" Text="Waiting to initialize GPIO..." Margin="10,50,10,10" TextAlignment="Center" FontSize="26.667" />
+      </StackPanel>
+   </Grid>
 </Page>

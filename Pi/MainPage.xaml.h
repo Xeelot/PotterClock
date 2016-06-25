@@ -34,14 +34,6 @@
 
 namespace BlinkyCpp
 {
-   /*enum StepperState {
-      STEP_OFF = 0,
-      STEP_1 = 1,
-      STEP_2 = 2,
-      STEP_3 = 3,
-      STEP_4 = 4
-   };*/
-
    // ***** Stepper motor 1 pins used
    const int STEP1_PIN1 = 4;
    const int STEP1_PIN2 = 17;
@@ -54,31 +46,33 @@ namespace BlinkyCpp
    const int STEP2_PIN4 = 25;
 
 
-    public ref class MainPage sealed
-    {
-    public:
-        MainPage();
+   public ref class MainPage sealed
+   {
+   public:
+      MainPage();
 
-    private:
-        void InitGPIO();
-        void OnTick(Platform::Object ^sender, Platform::Object ^args);
-        void writePins();
-        StepperController control1;
-        
-        Windows::UI::Xaml::DispatcherTimer ^timer_;
-        Windows::Devices::Gpio::GpioPinValue step1pin1Value = Windows::Devices::Gpio::GpioPinValue::Low;
-        Windows::Devices::Gpio::GpioPinValue step1pin2Value = Windows::Devices::Gpio::GpioPinValue::Low;
-        Windows::Devices::Gpio::GpioPinValue step1pin3Value = Windows::Devices::Gpio::GpioPinValue::Low;
-        Windows::Devices::Gpio::GpioPinValue step1pin4Value = Windows::Devices::Gpio::GpioPinValue::Low;
-        StepperState stepperState;
-        Windows::Devices::Gpio::GpioPin ^step1pin1;
-        Windows::Devices::Gpio::GpioPin ^step1pin2;
-        Windows::Devices::Gpio::GpioPin ^step1pin3;
-        Windows::Devices::Gpio::GpioPin ^step1pin4;
-        Windows::UI::Xaml::Media::SolidColorBrush ^redBrush_    = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Red);
-        Windows::UI::Xaml::Media::SolidColorBrush ^blueBrush_   = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Blue);
-        Windows::UI::Xaml::Media::SolidColorBrush ^greenBrush_  = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Green);
-        Windows::UI::Xaml::Media::SolidColorBrush ^yellowBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Yellow);
-        Windows::UI::Xaml::Media::SolidColorBrush ^grayBrush_   = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::LightGray);
-    };
+   private:
+      void InitGPIO();
+      void OnTick(Platform::Object ^sender, Platform::Object ^args);
+
+      StepperController control1;
+      StepperController control2;
+
+
+      Windows::UI::Xaml::DispatcherTimer ^timer_;
+      //Windows::Devices::Gpio::GpioPinValue step1pin1Value = Windows::Devices::Gpio::GpioPinValue::Low;
+      //Windows::Devices::Gpio::GpioPinValue step1pin2Value = Windows::Devices::Gpio::GpioPinValue::Low;
+      //Windows::Devices::Gpio::GpioPinValue step1pin3Value = Windows::Devices::Gpio::GpioPinValue::Low;
+      //Windows::Devices::Gpio::GpioPinValue step1pin4Value = Windows::Devices::Gpio::GpioPinValue::Low;
+      //StepperState stepperState;
+      //Windows::Devices::Gpio::GpioPin ^step1pin1;
+      //Windows::Devices::Gpio::GpioPin ^step1pin2;
+      //Windows::Devices::Gpio::GpioPin ^step1pin3;
+      //Windows::Devices::Gpio::GpioPin ^step1pin4;
+      Windows::UI::Xaml::Media::SolidColorBrush ^redBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Red);
+      Windows::UI::Xaml::Media::SolidColorBrush ^blueBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Blue);
+      Windows::UI::Xaml::Media::SolidColorBrush ^greenBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Green);
+      Windows::UI::Xaml::Media::SolidColorBrush ^yellowBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Yellow);
+      Windows::UI::Xaml::Media::SolidColorBrush ^grayBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::LightGray);
+   };
 }

@@ -28,39 +28,60 @@ using namespace concurrency;
 
 MainPage::MainPage()
 {
-    InitializeComponent();
+   InitializeComponent();
 
-    InitGPIO();
-	if ((step1pin1 != nullptr) && (step1pin2 != nullptr) && (step1pin3 != nullptr) && (step1pin4 != nullptr))
-	{
-		timer_ = ref new DispatcherTimer();
-		TimeSpan interval;
-		interval.Duration = 100;
-		timer_->Interval = interval;
-		timer_->Tick += ref new EventHandler<Object ^>(this, &MainPage::OnTick);
-		timer_->Start();
-	}
+   InitGPIO();
+   //if ((step1pin1 != nullptr) && (step1pin2 != nullptr) && (step1pin3 != nullptr) && (step1pin4 != nullptr))
+   if ((control1.getInitState() == InitState::INIT_GOOD) && (control2.getInitState() == InitState::INIT_GOOD))
+   {
+      timer_ = ref new DispatcherTimer();
+      TimeSpan interval;
+      // 10000000 = 1 second
+      interval.Duration = 50000000; // 5 seconds
+      timer_->Interval = interval;
+      timer_->Tick += ref new EventHandler<Object ^>(this, &MainPage::OnTick);
+      timer_->Start();
+   }
 }
 
 
 void MainPage::InitGPIO()
 {
-	auto gpio = GpioController::GetDefault();
+   /*auto gpio = GpioController::GetDefault();
 
-	if (gpio == nullptr)
-	{
-		step1pin1 = nullptr;
-      step1pin2 = nullptr;
-      step1pin3 = nullptr;
-      step1pin4 = nullptr;
-		GpioStatus->Text = "There is no GPIO controller on this device.";
-		return;
-	}
+   if (gpio == nullptr)
+   {
+      //step1pin1 = nullptr;
+      //step1pin2 = nullptr;
+      //step1pin3 = nullptr;
+      //step1pin4 = nullptr;
+      //GpioStatus->Text = "There is no GPIO controller on this device.";
+      return;
+   }*/
+   InitState check;
+   check = control1.initStepper(STEP1_PIN1, STEP1_PIN2, STEP1_PIN3, STEP1_PIN4);
+   if (check == InitState::INIT_GOOD)
+   {
+      GpioStatus1->Text = "GPIO initialized properly!";
+   }
+   else
+   {
+      GpioStatus1->Text = "GPIO initialization failed.";
+   }
 
-   stepperState = StepperState::STEP_OFF;
-	step1pin1 = gpio->OpenPin(STEP1_PIN1);
-	step1pin1->Write(step1pin1Value);
-	step1pin1->SetDriveMode(GpioPinDriveMode::Output);
+   check = control2.initStepper(STEP2_PIN1, STEP2_PIN2, STEP2_PIN3, STEP2_PIN4);
+   if (check == InitState::INIT_GOOD)
+   {
+      GpioStatus2->Text = "GPIO initialized properly!";
+   }
+   else
+   {
+      GpioStatus2->Text = "GPIO initialization failed.";
+   }
+   /*stepperState = StepperState::STEP_OFF;
+   step1pin1 = gpio->OpenPin(STEP1_PIN1);
+   step1pin1->Write(step1pin1Value);
+   step1pin1->SetDriveMode(GpioPinDriveMode::Output);
    step1pin2 = gpio->OpenPin(STEP1_PIN2);
    step1pin2->Write(step1pin2Value);
    step1pin2->SetDriveMode(GpioPinDriveMode::Output);
@@ -70,11 +91,10 @@ void MainPage::InitGPIO()
    step1pin4 = gpio->OpenPin(STEP1_PIN4);
    step1pin4->Write(step1pin4Value);
    step1pin4->SetDriveMode(GpioPinDriveMode::Output);
-
-	GpioStatus->Text = "GPIO pin initialized correctly.";
+   */
 }
 
-
+/*
 void MainPage::writePins()
 {
    step1pin1->Write(step1pin1Value);
@@ -82,11 +102,11 @@ void MainPage::writePins()
    step1pin3->Write(step1pin3Value);
    step1pin4->Write(step1pin4Value);
 }
-
+*/
 
 void MainPage::OnTick(Object ^sender, Object ^args)
 {
-   switch (stepperState)
+   /*switch (stepperState)
    {
    case StepperState::STEP_OFF:
       step1pin1Value = GpioPinValue::High;
@@ -130,8 +150,11 @@ void MainPage::OnTick(Object ^sender, Object ^args)
       LED->Fill = grayBrush_;
       break;
    }
-
    writePins();
+   */
+   int test = rand() % PositionState::POSITION_MAX;
+   PositionText1->Text = test.ToString();
+   control1.setPosition(static_cast<PositionState>(test));
 }
 
 

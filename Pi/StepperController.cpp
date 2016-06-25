@@ -13,7 +13,21 @@ StepperController::StepperController()
    }
    stepState = StepperState::STEP_OFF;
    posState = PositionState::WORK;
+   initState = InitState::INIT_NONE;
 }
+
+PositionState StepperController::getPosition()
+{
+   // Return the current position of the hand on the face of the clock
+   return posState;
+}
+
+InitState StepperController::getInitState()
+{
+   // Return the current state of the controller
+   return initState;
+}
+
 
 InitState StepperController::initStepper(int pin1, int pin2, int pin3, int pin4)
 {
@@ -26,8 +40,9 @@ InitState StepperController::initStepper(int pin1, int pin2, int pin3, int pin4)
       for (int i = 0; i < NUM_PINS; ++i)
       {
          pins[i] = nullptr;
-         return InitState::INIT_FAIL;
       }
+      initState = InitState::INIT_FAIL;
+      return initState;
    }
 
    // GPIO should be good at this point, set the pins and output modes on the GPIO
@@ -41,16 +56,113 @@ InitState StepperController::initStepper(int pin1, int pin2, int pin3, int pin4)
       pins[i]->SetDriveMode(GpioPinDriveMode::Output);
    }
 
-   return InitState::INIT_GOOD;
+   initState = InitState::INIT_GOOD;
+   return initState;
 }
+
 
 void StepperController::setPosition(PositionState pos)
 {
-   //TODO: implement movement to next position
+   // Calculate the difference in positions
+   int positionsToTurn = (PositionState::POSITION_MAX + pos - posState) % PositionState::POSITION_MAX;
+   // Calculate the number of ticks to step to reach position
+   int ticksToTurn = positionsToTurn * POS2TICKS;
+   // Move forward or backward, one of the cool parts of a magic clock
+   // Difference:   (1)-(6)  +12 (13)-(18) %12 (1)-(6)  then clockwise
+   // Difference:   (7)-(11) +12 (19)-(23) %12 (7)-(11) then counter-clockwise
+   // Difference:  (-5)-(-1) +12  (7)-(11) %12 (7)-(11) then counter-clockwise
+   // Difference: (-11)-(-6) +12  (1)-(6)  %12 (1)-(6)  then clockwise
+   if ((positionsToTurn > 0) && (positionsToTurn <= 6))
+   {
+      moveTicks(ticksToTurn, Direction::CLOCKWISE);
+   }
+   else if ((positionsToTurn > 6) && (positionsToTurn < 12))
+   {
+      moveTicks(ticksToTurn, Direction::COUNTER_CLOCKWISE);
+   }
+   // Set our new position once complete
+   posState = pos;
 }
 
-PositionState StepperController::getPosition()
+
+void StepperController::moveTicks(int ticks, Direction dir)
 {
-   // Return the current position of the hand on the face of the clock
-   return posState;
+   // Loop over the amount of ticks input to turn to the next position
+   for (int i = 0; i < ticks; ++i)
+   {
+      switch (stepState)
+      {
+      case StepperState::STEP_OFF:
+      case StepperState::STEP_4:
+         setStepperState(Windows::Devices::Gpio::GpioPinValue::High, Windows::Devices::Gpio::GpioPinValue::Low,
+                         Windows::Devices::Gpio::GpioPinValue::High, Windows::Devices::Gpio::GpioPinValue::Low);
+         if (dir == Direction::CLOCKWISE) 
+         {
+            stepState = StepperState::STEP_1;
+         }
+         else 
+         {
+            stepState = StepperState::STEP_3;
+         }
+         break;
+      case StepperState::STEP_1:
+         setStepperState(Windows::Devices::Gpio::GpioPinValue::Low, Windows::Devices::Gpio::GpioPinValue::High,
+                         Windows::Devices::Gpio::GpioPinValue::High, Windows::Devices::Gpio::GpioPinValue::Low);
+         if (dir == Direction::CLOCKWISE)
+         {
+            stepState = StepperState::STEP_2;
+         }
+         else
+         {
+            stepState = StepperState::STEP_4;
+         }
+         break;
+      case StepperState::STEP_2:
+         setStepperState(Windows::Devices::Gpio::GpioPinValue::Low, Windows::Devices::Gpio::GpioPinValue::High,
+                         Windows::Devices::Gpio::GpioPinValue::Low, Windows::Devices::Gpio::GpioPinValue::High);
+         if (dir == Direction::CLOCKWISE)
+         {
+            stepState = StepperState::STEP_3;
+         }
+         else
+         {
+            stepState = StepperState::STEP_1;
+         }
+         break;
+      case StepperState::STEP_3:
+         setStepperState(Windows::Devices::Gpio::GpioPinValue::High, Windows::Devices::Gpio::GpioPinValue::Low,
+                         Windows::Devices::Gpio::GpioPinValue::Low, Windows::Devices::Gpio::GpioPinValue::High);
+         if (dir == Direction::CLOCKWISE)
+         {
+            stepState = StepperState::STEP_4;
+         }
+         else
+         {
+            stepState = StepperState::STEP_2;
+         }
+         break;
+      }
+      //TODO: determine if a delay will actually help the rotation
+      Sleep(TICK_DELAY);
+   }
+   // Turn off the motor after completion
+   setStepperState(Windows::Devices::Gpio::GpioPinValue::Low, Windows::Devices::Gpio::GpioPinValue::Low,
+                   Windows::Devices::Gpio::GpioPinValue::Low, Windows::Devices::Gpio::GpioPinValue::Low);
+}
+
+
+void StepperController::setStepperState(Windows::Devices::Gpio::GpioPinValue val1, Windows::Devices::Gpio::GpioPinValue val2,
+                                        Windows::Devices::Gpio::GpioPinValue val3, Windows::Devices::Gpio::GpioPinValue val4)
+{
+   // Read in the values pass in
+   //TODO: improve numbers being passed, generalize
+   pinValues[0] = val1;
+   pinValues[1] = val2;
+   pinValues[2] = val3;
+   pinValues[3] = val4;
+   // Write the values to the pins
+   for (int i = 0; i < NUM_PINS; ++i)
+   {
+      pins[i]->Write(pinValues[i]);
+   }
 }

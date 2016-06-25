@@ -4,14 +4,8 @@ namespace BlinkyCpp
 {
    // ***** Defined values and constants used for controlling the stepper motors
    #define NUM_PINS 4
-   #define STEPPER1 1
-
-   // ***** Constant brushes used for debugging
-   //Windows::UI::Xaml::Media::SolidColorBrush ^redBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Red);
-   //Windows::UI::Xaml::Media::SolidColorBrush ^blueBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Blue);
-   //Windows::UI::Xaml::Media::SolidColorBrush ^greenBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Green);
-   //Windows::UI::Xaml::Media::SolidColorBrush ^yellowBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::Yellow);
-   //Windows::UI::Xaml::Media::SolidColorBrush ^grayBrush_ = ref new Windows::UI::Xaml::Media::SolidColorBrush(Windows::UI::Colors::LightGray);
+   #define POS2TICKS 170
+   #define TICK_DELAY 10
 
    // ***** Enumeration for the 5 states of the stepper motor
    enum StepperState : int {
@@ -35,7 +29,8 @@ namespace BlinkyCpp
       TRANSIT = 8,
       HOLIDAY = 9,
       PUB = 10,
-      GROCERY = 11
+      GROCERY = 11,
+      POSITION_MAX = 12
    };
 
    // ***** Enumeration for the state of the controller
@@ -43,6 +38,12 @@ namespace BlinkyCpp
       INIT_NONE = 0,
       INIT_GOOD = 1,
       INIT_FAIL = 2
+   };
+
+   // ***** Enumeration on which way to turn
+   enum Direction : int {
+      CLOCKWISE = 0,
+      COUNTER_CLOCKWISE = 1
    };
 
 
@@ -57,8 +58,15 @@ namespace BlinkyCpp
       void setPosition(PositionState pos);
       // Retrieve the position of the stepper
       PositionState getPosition();
+      // Retrieve the state of the controller
+      InitState getInitState();
 
    private:
+      // Internal call to turn the stepper motor
+      void moveTicks(int ticks, Direction dir);
+      // Internal call to set and write the pins for a specific state
+      void setStepperState(Windows::Devices::Gpio::GpioPinValue val1, Windows::Devices::Gpio::GpioPinValue val2,
+                           Windows::Devices::Gpio::GpioPinValue val3, Windows::Devices::Gpio::GpioPinValue val4);
       // Container for all the pin values
       Windows::Devices::Gpio::GpioPinValue pinValues[NUM_PINS];
       // Container for all the pins
@@ -67,6 +75,8 @@ namespace BlinkyCpp
       StepperState stepState;
       // Current position of the stepper motor
       PositionState posState;
+      // Current state of initialization
+      InitState initState;
    };
 }
 
