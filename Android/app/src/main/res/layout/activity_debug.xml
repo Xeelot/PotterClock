@@ -10,17 +10,19 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.app.xeelot.potterclock.DebugActivity">
 
-    <EditText
-        android:layout_width="fill_parent"
+    <Spinner
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:ems="10"
-        android:id="@+id/nameField"
-        android:hint="@string/name" />
+        android:id="@+id/spinner"
+        android:entries="@array/clock_names"
+        android:prompt="@string/clock_prompt"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"/>
 
     <TableLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:stretchColumns="*">
 
         <TableRow
             android:layout_width="match_parent"

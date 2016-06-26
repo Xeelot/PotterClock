@@ -6,22 +6,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.regions.Regions;
-
 import java.util.Calendar;
+
 
 public class DebugActivity extends AppCompatActivity implements View.OnClickListener {
 
     void setupListener(int inputId) {
         Button temp = (Button)findViewById(inputId);
-        temp.setOnClickListener(this);
+        if(temp != null) {
+            temp.setOnClickListener(this);
+        }
     }
-
-    AwsDb ddb;
-    CognitoCachingCredentialsProvider credentialsProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,18 +37,9 @@ public class DebugActivity extends AppCompatActivity implements View.OnClickList
         setupListener(R.id.buttonHoliday);
         setupListener(R.id.buttonPub);
         setupListener(R.id.buttonGrocery);
-
-        // Initialize the Amazon Cognito credentials provider
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                getApplicationContext(),
-                "us-east-1:baa7edb4-4d3c-403c-8fee-007239f09082", // Identity Pool ID
-                Regions.US_EAST_1 // Region
-        );
-        // Create our AwsDb class for interfacing with DynamoDB
-        ddb = new AwsDb();
-        ddb.initDb(credentialsProvider);
     }
 
+    CurrentRestClientUsage currentRest = new CurrentRestClientUsage();
 
     @Override
     public void onClick(View v) {
@@ -61,8 +50,8 @@ public class DebugActivity extends AppCompatActivity implements View.OnClickList
         int duration = Toast.LENGTH_SHORT;
 
         // Check name field to ensure it's filled in
-        EditText nameObject = (EditText)findViewById(R.id.nameField);
-        CharSequence nameText = nameObject.getText().toString().trim();
+        Spinner nameObject = (Spinner)findViewById(R.id.spinner);
+        CharSequence nameText = nameObject.getSelectedItem().toString();
         Toast toast;
         if(nameText.equals("")) {
             // No name, show name toast and exit
@@ -81,16 +70,9 @@ public class DebugActivity extends AppCompatActivity implements View.OnClickList
             c.setMinute(calendar.get(Calendar.MINUTE));
             c.setSecond(calendar.get(Calendar.SECOND));
 
-            ddb.saveCurrent(c);
+            currentRest.postCurrent(c.getParams());
 
             toast = Toast.makeText(context, locText, duration);
-            // Attempt to POST the json data
-            //try {
-                //CharSequence response = jData.post();
-            //    toast = Toast.makeText(context, locText, duration);
-            //} catch(IOException e) {
-            //    e.printStackTrace();
-            //}
         }
 
         // Output a toast on the button press for visual satisfaction

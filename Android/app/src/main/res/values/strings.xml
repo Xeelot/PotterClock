@@ -12,5 +12,9 @@
     <string name="park">Park</string>
     <string name="home">Home</string>
     <string name="work">Work</string>
-    <string name="name">Name</string>
+    <string name="clock_prompt">Choose a hand</string>
+    <string-array name="clock_names">
+        <item>Joe</item>
+        <item>Hannah</item>
+    </string-array>
 </resources>

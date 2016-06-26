@@ -1,8 +1,11 @@
 package com.app.xeelot.potterclock;
 
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
-@DynamoDBTable(tableName = "Current")
+import com.loopj.android.http.RequestParams;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class Current {
     private String userId;
     private String position;
@@ -13,7 +16,6 @@ public class Current {
     private int minute;
     private int second;
 
-    @DynamoDBHashKey(attributeName = "userId")
     public String getUserId() {
         return userId;
     }
@@ -22,7 +24,6 @@ public class Current {
         this.userId = userId;
     }
 
-    @DynamoDBAttribute(attributeName = "position")
     public String getPosition() {
         return position;
     }
@@ -31,7 +32,6 @@ public class Current {
         this.position = position;
     }
 
-    @DynamoDBAttribute(attributeName = "month")
     public int getMonth() {
         return month;
     }
@@ -40,7 +40,6 @@ public class Current {
         this.month = month;
     }
 
-    @DynamoDBAttribute(attributeName = "day")
     public int getDay() {
         return day;
     }
@@ -49,7 +48,6 @@ public class Current {
         this.day = day;
     }
 
-    @DynamoDBAttribute(attributeName = "year")
     public int getYear() {
         return year;
     }
@@ -58,7 +56,6 @@ public class Current {
         this.year = year;
     }
 
-    @DynamoDBAttribute(attributeName = "hour")
     public int getHour() {
         return hour;
     }
@@ -67,7 +64,6 @@ public class Current {
         this.hour = hour;
     }
 
-    @DynamoDBAttribute(attributeName = "minute")
     public int getMinute() {
         return minute;
     }
@@ -76,12 +72,24 @@ public class Current {
         this.minute = minute;
     }
 
-    @DynamoDBAttribute(attributeName = "second")
     public int getSecond() {
         return second;
     }
 
     public void setSecond(int second) {
         this.second = second;
+    }
+
+    public RequestParams getParams() {
+        RequestParams request = new RequestParams();
+        request.put("userid", userId);
+        request.put("position", position);
+        request.put("month", month);
+        request.put("day", day);
+        request.put("year", year);
+        request.put("hour", hour);
+        request.put("minute", minute);
+        request.put("second", second);
+        return request;
     }
 }
