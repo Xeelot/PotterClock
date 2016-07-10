@@ -6,13 +6,14 @@ import decimal
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 from enum import IntEnum
+from random import randint
 
 class Output(IntEnum):
    NONE = 0
    FUNC = 1
    VERB = 2
 
-verbose = Output.VERB
+verbose = Output.FUNC
 
 if verbose > Output.NONE:
    print("*** Platform being used: " + sys.platform)
@@ -29,6 +30,8 @@ STEP_INDEX = 43
 FAIL_COUNT = 10
 SLEEP_USER = 1
 SLEEP_LONG = 10
+BACKWARD = 0
+FORWARD = 1
 # Pins for stepper 1
 STEP1_PIN1 = 4;
 STEP1_PIN2 = 17;
@@ -59,11 +62,16 @@ class User:
       self.index = index
       User.numUsers += 1
    def calcIndexChange(self, newIndex):
-      change = ((self.index + NUM_INDEXES - newIndex) % NUM_INDEXES)
+      direction = randint(BACKWARD, FORWARD)
+      change = 0
+      if direction == FORWARD:
+         change = ((NUM_INDEXES - self.index + newIndex) % NUM_INDEXES)
+      else:
+         change = ((NUM_INDEXES + self.index - newIndex) % NUM_INDEXES)
       if verbose > Output.NONE:
-         print("*** Old Index: " + str(self.index) + "  New Index: " + str(newIndex))
+         print("*** Old Index: " + str(self.index) + "  New Index: " + str(newIndex) + "  Change: " + str(change))
       self.index = newIndex
-      return change
+      return { 'change':change, 'direction':direction }
 
 # Stepper class for controlling a stepper motor through the GPIO
 class Stepper:
@@ -92,30 +100,34 @@ class Stepper:
       gpio.output(self.pin4, v4)
    def forward(self, steps):
       if verbose > Output.NONE:
-         print("*** Moving stepper " + str(steps) + " steps...")
-      for i in range(0, steps):
-         self.setStep(1, 0, 1, 0)
+         print("*** Moving stepper FORWARD " + str(steps) + " indexes...")
+      for i in range(0, (steps * STEP_INDEX)):
+         self.setStep(1, 0, 0, 0)
          time.sleep(STEP_DELAY)
-         self.setStep(0, 1, 1, 0)
+         self.setStep(0, 1, 0, 0)
          time.sleep(STEP_DELAY)
-         self.setStep(0, 1, 0, 1)
+         self.setStep(0, 0, 1, 0)
          time.sleep(STEP_DELAY)
-         self.setStep(1, 0, 0, 1)
+         self.setStep(0, 0, 0, 1)
          time.sleep(STEP_DELAY)
       self.setStep(0, 0, 0, 0)
       if verbose > Output.NONE:
          print("*** Stepper movement complete!")
-   def reverse(self, steps):
-      for i in range(0, steps):
-         self.setStep(1, 0, 1, 0)
+   def backward(self, steps):
+      if verbose > Output.NONE:
+         print("*** Moving stepper BACKWARD " + str(steps) + " indexes...")
+      for i in range(0, (steps * STEP_INDEX)):
+         self.setStep(0, 0, 0, 1)
          time.sleep(STEP_DELAY)
-         self.setStep(0, 1, 1, 0)
+         self.setStep(0, 0, 1, 0)
          time.sleep(STEP_DELAY)
-         self.setStep(0, 1, 0, 1)
+         self.setStep(0, 1, 0, 0)
          time.sleep(STEP_DELAY)
-         self.setStep(1, 0, 0, 1)
+         self.setStep(1, 0, 0, 0)
          time.sleep(STEP_DELAY)
       self.setStep(0, 0, 0, 0)
+      if verbose > Output.NONE:
+         print("*** Stepper movement complete!")
 
 
 # Setup the gpio bus for stepper motors on linux only
@@ -154,7 +166,7 @@ while continueLoop:
       try:
          # Try to access the user data from the table
          if verbose > Output.NONE:
-            print("*** Making call for user " + currUser.name)
+            print("\n*** Making call for user " + currUser.name)
          response = table.get_item( Key={ 'userid': currUser.name } )
       except ClientError as e:
          # DB call was unsuccessful, print a message and increment counter
@@ -173,23 +185,26 @@ while continueLoop:
             print(json.dumps(item, indent=4, cls=DecimalEncoder))
          # Grab the index from the response and calculate the change from current user index
          newIndex = item['index']
-         change = currUser.calcIndexChange(newIndex)
-         # Move the stepper motors according to the change, reset, then brief sleep
-         currStepper.forward(int(change * STEP_INDEX))
+         result = currUser.calcIndexChange(newIndex)
+         # Move the stepper motors according to the change and apply a brief sleep
+         if result['direction'] == FORWARD:
+            currStepper.forward(int(result['change']))
+         else:
+            currStepper.backward(int(result['change']))   
          time.sleep(SLEEP_USER)
 
    if failedConnCount >= FAIL_COUNT:
       # Stop execution if too many failures occur in a row
       if verbose > Output.NONE:
-         print("*** Max connection failures reached, exiting...")
+         print("\n*** Max connection failures reached, exiting...\n")
       continueLoop = False
    else:
       # Sleep for a longer period after
       if verbose > Output.NONE:
-         print("*** Waiting " + str(SLEEP_LONG) + " seconds for next poll...")
+         print("\n*** Waiting " + str(SLEEP_LONG) + " seconds for next poll...\n")
       time.sleep(SLEEP_LONG)
 
 # Cleanup at end of run
 if verbose > Output.NONE:
-   print("*** Goodbye!")
+   print("\n*** Goodbye!\n")
 gpio.cleanup()
