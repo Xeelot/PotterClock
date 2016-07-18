@@ -1,4 +1,4 @@
-package com.app.xeelot.potterclock;
+package com.apps.xeelot.potterclock;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

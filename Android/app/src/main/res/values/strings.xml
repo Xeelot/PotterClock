@@ -1,20 +1,32 @@
 <resources>
     <string name="app_name">PotterClock</string>
-    <string name="grocery">Grocery</string>
-    <string name="pub">Pub</string>
-    <string name="holiday">Holiday</string>
-    <string name="transit">Transit</string>
-    <string name="texas">Texas</string>
-    <string name="florida">Florida</string>
-    <string name="mortal_peril">Mortal Peril</string>
-    <string name="lost">Lost</string>
-    <string name="barn">Barn</string>
-    <string name="park">Park</string>
-    <string name="home">Home</string>
-    <string name="work">Work</string>
-    <string name="clock_prompt">Choose a hand</string>
-    <string-array name="clock_names">
+    <string name="title_activity_maps">Map</string>
+    <string name="create">Create</string>
+    <string name="update">Update</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="new_marker">New Marker</string>
+    <string name="click_to_edit">Click to edit…</string>
+    <string name="enter_marker_name">Enter marker name…</string>
+    <string name="radius">Radius:</string>
+    <string name="select_user">Select User:</string>
+    <string name="select">Select</string>
+    <string-array name="user_array">
         <item>Joe</item>
         <item>Hannah</item>
+    </string-array>
+    <string-array name="index_names">
+        <item>Lost</item>
+        <item>Mortal Peril</item>
+        <item>Park</item>
+        <item>Texas</item>
+        <item>Holiday</item>
+        <item>Work</item>
+        <item>Transit</item>
+        <item>Grocery</item>
+        <item>Florida</item>
+        <item>Pub</item>
+        <item>Barn</item>
+        <item>Home</item>
     </string-array>
 </resources>
