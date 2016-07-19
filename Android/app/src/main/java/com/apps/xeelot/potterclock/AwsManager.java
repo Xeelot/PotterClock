@@ -29,6 +29,11 @@ public class AwsManager {
     // Create a singleton of the class when getAwsManager is called
     private static AwsManager awsManager;
 
+    // Create a singleton of the map that will hold all the markers from the DB
+    private static HashMap<LatLng,MarkerLocation> markerMap;
+    private static boolean markersReady;
+    private static String currentUser;
+
 
     // Interface for receiving when the database is ready
     interface AwsConnectionReady {
@@ -53,13 +58,35 @@ public class AwsManager {
 
 
     // Interface for responding to MarkerLocation scans
-    interface MarkerLocationCallback {
-        void markerLocationCallback(HashMap<LatLng,MarkerLocation> ml);
+    interface MarkerScanCallback {
+        void markerScanCallback();
     }
-    MarkerLocationCallback markerLocationCallback;
-    void registerMarkerLocationCallback(MarkerLocationCallback callback) {
-        Log.d(LOG_AWS, "Marker location callback registered.");
-        markerLocationCallback = callback;
+    MarkerScanCallback markerScanCallback;
+    void registerMarkerScanCallback(MarkerScanCallback callback) {
+        Log.d(LOG_AWS, "Marker scan callback registered.");
+        markerScanCallback = callback;
+    }
+
+
+    // Interface for responding to MarkerLocation scans
+    interface MarkerUpdateCallback {
+        void markerUpdateCallback(MarkerLocation ml);
+    }
+    MarkerUpdateCallback markerUpdateCallback;
+    void registerMarkerUpdateCallback(MarkerUpdateCallback callback) {
+        Log.d(LOG_AWS, "Marker update callback registered.");
+        markerUpdateCallback = callback;
+    }
+
+
+    // Interface for responding to MarkerLocation scans
+    interface MarkerDeleteCallback {
+        void markerDeleteCallback();
+    }
+    MarkerDeleteCallback markerDeleteCallback;
+    void registerMarkerDeleteCallback(MarkerDeleteCallback callback) {
+        Log.d(LOG_AWS, "Marker delete callback registered.");
+        markerDeleteCallback = callback;
     }
 
 
@@ -70,6 +97,8 @@ public class AwsManager {
         if(awsManager == null) {
             Log.d(LOG_AWS, "AwsManager being instantiated...");
             awsManager = new AwsManager();
+            markerMap = new HashMap<LatLng,MarkerLocation>();
+            markersReady = false;
             appContext = context;
 
             new Thread(new Runnable() {
@@ -94,6 +123,26 @@ public class AwsManager {
             }).start();
         }
         return awsManager;
+    }
+
+
+    // Functions to handle marker availability. Idea is to call getMarkerMapReady and if true, call
+    // getMarkerMap. If not ready, getMarkerMap will return null. If it's not ready, can register for
+    // the callback when the scan is returned. Not sure on timing of scan as it scales, so the interface
+    // is a little goofy for worst case scenario
+    public static boolean getMarkerMapReady() {
+        return markersReady;
+    }
+    public static HashMap<LatLng,MarkerLocation> getMarkerMap() {
+        if(markersReady) {
+            return markerMap;
+        }
+        return null;
+    }
+
+    // Set function that MainActivity will call to keep track of the current user
+    public static void setCurrentUser(String user) {
+        currentUser = user;
     }
 
 
@@ -144,13 +193,13 @@ public class AwsManager {
                 try {
                     DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
                     PaginatedScanList<MarkerLocation> result = mapper.scan(MarkerLocation.class, scanExpression);
-                    HashMap<LatLng,MarkerLocation> resultList = new HashMap<LatLng,MarkerLocation>();
                     LatLng latlng;
                     for (MarkerLocation mloc : result) {
                         latlng = new LatLng(mloc.getLatitude(),mloc.getLongitude());
-                        resultList.put(latlng,mloc);
+                        markerMap.put(latlng,mloc);
                     }
-                    markerLocationCallback.markerLocationCallback(resultList);
+                    markersReady = true;
+                    markerScanCallback.markerScanCallback();
                 }
                 catch (AmazonClientException e) {
                     Toast t = Toast.makeText(appContext, "Marker Location scan failed", Toast.LENGTH_SHORT);
@@ -164,12 +213,15 @@ public class AwsManager {
     // Function to create a new or update an existing MarkerLocation object in the table
     public void updateMarker(final MarkerLocation ml) {
         Log.d(LOG_AWS, "Marker Location: (" + ml.getLatitude() + "," + ml.getLongitude() + ") update sent...");
+        // Everything is set in MapActivity except for the user id, set that here
+        ml.setUserid(currentUser);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     mapper.save(ml);
                     Log.d(LOG_AWS, "Marker Location update successful!");
+                    markerUpdateCallback.markerUpdateCallback(ml);
                 }
                 catch (AmazonClientException e) {
                     Toast t = Toast.makeText(appContext, "Marker Location update failed", Toast.LENGTH_SHORT);
@@ -183,12 +235,15 @@ public class AwsManager {
     // Function to delete an existing MarkerLocation object from the table
     public void deleteMarker(final MarkerLocation ml) {
         Log.d(LOG_AWS, "Marker Location: (" + ml.getLatitude() + "," + ml.getLongitude() + ") delete sent...");
+        // Everything is set in MapActivity except for the user id, set that here
+        ml.setUserid(currentUser);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     mapper.delete(ml);
                     Log.d(LOG_AWS, "Marker Location delete successful!");
+                    markerDeleteCallback.markerDeleteCallback();
                 }
                 catch (AmazonClientException e) {
                     Toast t = Toast.makeText(appContext, "Marker Location delete failed", Toast.LENGTH_SHORT);

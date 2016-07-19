@@ -28,7 +28,9 @@ import java.util.HashMap;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
-        AwsManager.MarkerLocationCallback,
+        AwsManager.MarkerScanCallback,
+        AwsManager.MarkerDeleteCallback,
+        AwsManager.MarkerUpdateCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnMapClickListener,
@@ -47,12 +49,13 @@ public class MapsActivity extends FragmentActivity implements
     private GoogleApiClient mGoogleApiClient;
     private AwsManager awsManager;
     private Resources res;
-    private HashMap<LatLng,MarkerLocation> tableMarkers;
+    private HashMap<LatLng,MarkerLocation> tableMarkers = null;
+    private boolean markersAdded = false;
     private Marker newMarker = null; // Keep track of new markers not committed yet
     private Circle newCircle = null;
     private Marker infoMarker = null; // Keep track of existing active marker
     private Circle infoCircle = null;
-    private Boolean infoOpen = false;
+    private boolean infoOpen = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +76,14 @@ public class MapsActivity extends FragmentActivity implements
 
         // Gather the resources and static instance of AwsManager
         awsManager = AwsManager.getAwsManager(getApplicationContext());
-        awsManager.registerMarkerLocationCallback(this);
+        // If the markers are ready, grab them
+        markersAdded = false;
+        if(AwsManager.getMarkerMapReady()) {
+            tableMarkers = AwsManager.getMarkerMap();
+        }
+        else {
+            awsManager.registerMarkerLocationCallback(this);
+        }
         res = getResources();
     }
 
@@ -122,23 +132,30 @@ public class MapsActivity extends FragmentActivity implements
 
     // Callback after scanning AWS for existing markers
     @Override
-    public void markerLocationCallback(final HashMap<LatLng,MarkerLocation> ml) {
-        tableMarkers = ml;
+    public void markerScanCallback() {
+        tableMarkers = AwsManager.getMarkerMap();
         try {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    for(HashMap.Entry<LatLng,MarkerLocation> entry : tableMarkers.entrySet()) {
-                        mMap.addMarker(new MarkerOptions()
-                                .position(entry.getKey())
-                                .title(entry.getValue().getName())
-                                .snippet(entry.getValue().getIndexName(res))
-                                .icon(entry.getValue().getIconDescriptor()));
-                    }
+                    addMarkersToMap();
                 }
             });
         } catch(Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void addMarkersToMap() {
+        if(!markersAdded) {
+            markersAdded = true;
+            for (HashMap.Entry<LatLng, MarkerLocation> entry : tableMarkers.entrySet()) {
+                mMap.addMarker(new MarkerOptions()
+                        .position(entry.getKey())
+                        .title(entry.getValue().getName())
+                        .snippet(entry.getValue().getIndexName(res))
+                        .icon(entry.getValue().getIconDescriptor()));
+            }
         }
     }
 
@@ -166,8 +183,9 @@ public class MapsActivity extends FragmentActivity implements
         mMap.setOnMapClickListener(this);
         mMap.setOnMarkerClickListener(this);
 
-        // Scan AWS table for all map locations
-        awsManager.getAllMarkers();
+        if(tableMarkers != null) {
+            addMarkersToMap();
+        }
     }
 
     @Override
@@ -309,13 +327,54 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     @Override
-    public void markerDialogDelete() {
+    public void markerDialogDelete(MarkerLocation ml) {
         Log.d(LOG_MAP, "Info window delete requested...");
-
+        // Only infoMarker can be deleted since newMarkers are not in the DB yet
+        ml.setLatitude(infoMarker.getPosition().getLatitude());
+        ml.setLongitude(infoMarker.getPosition().getLongitude());
+        awsManager.deleteMarker(ml);
     }
 
     @Override
-    public void markerDialogUpdate() {
+    public void markerDialogUpdate(MarkerLocation ml) {
         Log.d(LOG_MAP, "Info window create/update requested...");
+        // Should receive name, radius, and index from dialog. Need to add lat/long
+        if(newMarker != null) {
+            ml.setLatitude(newMarker.getPosition().getLatitude());
+            ml.setLongitude(newMarker.getPosition().getLongitude());
+        }
+        else {
+            ml.setLatitude(infoMarker.getPosition().getLatitude());
+            ml.setLongitude(infoMarker.getPosition().getLongitude());
+        }
+        awsManager.updateMarker(ml);
+    }
+
+    @Override
+    public void markerDeleteCallback() {
+        Log.d(LOG_MAP, "Marker deleted response from AWS");
+        infoMarker.remove();
+        infoCircle.remove();
+        infoMarker = null;
+        infoCircle = null;
+    }
+
+    @Override
+    public void markerUpdateCallback(MarkerLocation ml) {
+        Log.d(LOG_MAP, "Marker updated response from AWS");
+        if(newMarker != null) {
+            // Delete the "new marker" and create a new "info marker"
+            infoMarker = newMarker;
+            infoCircle = newCircle;
+            newMarker = null;
+            newCircle = null;
+        }
+        infoMarker.setTitle(ml.getName());
+        infoMarker.setSnippet(ml.getIndexName(res));
+        infoMarker.setIcon(ml.getIconDescriptor());
+        infoMarker.showInfoWindow();
+        infoCircle.setRadius(ml.getRadius());
+        infoCircle.setStrokeColor(ml.getCircleColor());
+        infoCircle.setFillColor(ml.getCircleColor() & CIRCLE_MASK);
     }
 }

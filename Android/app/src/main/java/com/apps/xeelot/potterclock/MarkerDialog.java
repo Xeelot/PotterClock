@@ -23,7 +23,7 @@ public class MarkerDialog extends DialogFragment {
 
     // Interface for retrieving an asynchronous create/update Marker
     interface MarkerDialogUpdate {
-        void markerDialogUpdate();
+        void markerDialogUpdate(MarkerLocation ml);
     }
     static MarkerDialogUpdate markerDialogUpdate;
     void registerMarkerDialogUpdate(MarkerDialogUpdate callback) {
@@ -32,7 +32,7 @@ public class MarkerDialog extends DialogFragment {
 
     // Interface for retrieving an asynchronous delete Marker
     interface MarkerDialogDelete {
-        void markerDialogDelete();
+        void markerDialogDelete(MarkerLocation ml);
     }
     static MarkerDialogDelete markerDialogDelete;
     void registerMarkerDialogDelete(MarkerDialogDelete callback) {
@@ -104,8 +104,9 @@ public class MarkerDialog extends DialogFragment {
         builder.setNeutralButton(R.string.delete, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                // Call the delete interface
-                markerDialogDelete.markerDialogDelete();
+                // Since we're deleting, the optional attributes shouldn't be important, call delete callback
+                MarkerLocation ml = new MarkerLocation();
+                markerDialogDelete.markerDialogDelete(ml);
             }
         });
         builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -157,19 +158,23 @@ public class MarkerDialog extends DialogFragment {
                     try {
                         if (Integer.parseInt(radiusEdit.getText().toString()) < 1) {
                             closeDialog = false;
-                            radiusEdit.setError("Enter integer greater than 1");
+                            radiusEdit.setError("Enter integer greater than 0");
                         }
                     } catch(Exception e) {
                         e.printStackTrace();
                         closeDialog = false;
-                        radiusEdit.setError("Enter integer greater than 1");
+                        radiusEdit.setError("Enter integer greater than 0");
                     }
                     if(indexType.getSelectedItemPosition() == Spinner.INVALID_POSITION) {
                         closeDialog = false;
                     }
                     if(closeDialog) {
                         ad.dismiss();
-                        markerDialogUpdate.markerDialogUpdate();
+                        MarkerLocation ml = new MarkerLocation();
+                        ml.setIndex(indexType.getSelectedItemPosition());
+                        ml.setName(nameEdit.getText().toString());
+                        ml.setRadius(Integer.parseInt(radiusEdit.getText().toString()));
+                        markerDialogUpdate.markerDialogUpdate(ml);
                     }
                 }
             });

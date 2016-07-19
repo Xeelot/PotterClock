@@ -13,9 +13,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.HashMap;
+
 public class MainActivity extends AppCompatActivity implements
         View.OnClickListener,
         AwsManager.CurrentLocationCallback,
+        AwsManager.MarkerScanCallback,
         AwsManager.AwsConnectionReady {
 
     // Constants
@@ -29,6 +32,7 @@ public class MainActivity extends AppCompatActivity implements
     private Button userButton;
     private Button updateButton;
     private AwsManager awsManager;
+    private HashMap<LatLng,MarkerLocation> markerMap;
     private String selectedUser;
     private Resources res;
     private SharedPreferences sp;
@@ -62,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements
         awsManager = AwsManager.getAwsManager(getApplicationContext());
         awsManager.registerAwsConnectionReady(this);
         awsManager.registerCurrentLocationCallback(this);
+        awsManager.registerMarkerLocationCallback(this);
     }
 
     // onStart comes after onCreate and checks to make sure we have a user selected
@@ -80,8 +85,9 @@ public class MainActivity extends AppCompatActivity implements
     public void awsConnectionReady() {
         // Get the user's current locations
         //TODO: make this more dynamic
-        awsManager.getCurrentLocation("Joe");
-        awsManager.getCurrentLocation("Hannah");
+        awsManager.getCurrentLocation(res.getString(R.string.user_joe));
+        awsManager.getCurrentLocation(res.getString(R.string.user_hannah));
+        awsManager.getAllMarkers();
     }
 
 
@@ -99,6 +105,14 @@ public class MainActivity extends AppCompatActivity implements
         } catch(Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    // Response from AWS that markers are ready
+    @Override
+    public void markerScanCallback() {
+        Log.d(LOG_MAIN, "Retrieved markers callback received!");
+        markerMap = AwsManager.getMarkerMap();
     }
 
 
@@ -138,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements
                 editor.putString(PREFS_USER, selectedUser);
                 editor.apply();
                 userButton.setText(selectedUser);
+                AwsManager.setCurrentUser(selectedUser);
             }
         });
         builder.create();

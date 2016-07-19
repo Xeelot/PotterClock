@@ -12,9 +12,11 @@
     <string name="select_user">Select User:</string>
     <string name="select_location">Select location…</string>
     <string name="select">Select</string>
+    <string name="user_joe">Joe</string>
+    <string name="user_hannah">Hannah</string>
     <string-array name="user_array">
-        <item>Joe</item>
-        <item>Hannah</item>
+        <item>@string/user_joe</item>
+        <item>@string/user_hannah</item>
     </string-array>
     <string name="index_lost">Lost</string>
     <string name="index_mort">Mortal Peril</string>
