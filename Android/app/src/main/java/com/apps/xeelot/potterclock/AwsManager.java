@@ -5,7 +5,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
@@ -13,8 +12,9 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanLis
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.google.android.gms.maps.model.LatLng;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class AwsManager {
@@ -54,7 +54,7 @@ public class AwsManager {
 
     // Interface for responding to MarkerLocation scans
     interface MarkerLocationCallback {
-        void markerLocationCallback(ArrayList<MarkerLocation> ml);
+        void markerLocationCallback(HashMap<LatLng,MarkerLocation> ml);
     }
     MarkerLocationCallback markerLocationCallback;
     void registerMarkerLocationCallback(MarkerLocationCallback callback) {
@@ -144,9 +144,11 @@ public class AwsManager {
                 try {
                     DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
                     PaginatedScanList<MarkerLocation> result = mapper.scan(MarkerLocation.class, scanExpression);
-                    ArrayList<MarkerLocation> resultList = new ArrayList<MarkerLocation>();
+                    HashMap<LatLng,MarkerLocation> resultList = new HashMap<LatLng,MarkerLocation>();
+                    LatLng latlng;
                     for (MarkerLocation mloc : result) {
-                        resultList.add(mloc);
+                        latlng = new LatLng(mloc.getLatitude(),mloc.getLongitude());
+                        resultList.put(latlng,mloc);
                     }
                     markerLocationCallback.markerLocationCallback(resultList);
                 }

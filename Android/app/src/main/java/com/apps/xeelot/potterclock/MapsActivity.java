@@ -24,7 +24,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MapsActivity extends FragmentActivity implements
@@ -34,22 +33,26 @@ public class MapsActivity extends FragmentActivity implements
         GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnMapClickListener,
         GoogleMap.OnMarkerClickListener,
-        GoogleMap.OnInfoWindowClickListener {
+        GoogleMap.OnInfoWindowClickListener,
+        MarkerDialog.MarkerDialogCancel,
+        MarkerDialog.MarkerDialogDelete,
+        MarkerDialog.MarkerDialogUpdate {
 
     private final String LOG_MAP = "MAP";
-    private final int DEF_RADIUS = 1;
+    private final int DEF_RADIUS = 10;
+    private final int CIRCLE_MASK = 0x44FFFFFF;
 
     // Create local variables
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
     private AwsManager awsManager;
     private Resources res;
-    private HashMap<LatLng,Marker> tableMarkers;
-    private Marker newMarker = null;
+    private HashMap<LatLng,MarkerLocation> tableMarkers;
+    private Marker newMarker = null; // Keep track of new markers not committed yet
     private Circle newCircle = null;
-    private Boolean infoOpen = false;
-    private Marker infoMarker = null;
+    private Marker infoMarker = null; // Keep track of existing active marker
     private Circle infoCircle = null;
+    private Boolean infoOpen = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,9 +75,6 @@ public class MapsActivity extends FragmentActivity implements
         awsManager = AwsManager.getAwsManager(getApplicationContext());
         awsManager.registerMarkerLocationCallback(this);
         res = getResources();
-
-        // Instantiate our map containers
-        tableMarkers = new HashMap<LatLng, Marker>();
     }
 
 
@@ -122,20 +122,18 @@ public class MapsActivity extends FragmentActivity implements
 
     // Callback after scanning AWS for existing markers
     @Override
-    public void markerLocationCallback(final ArrayList<MarkerLocation> ml) {
+    public void markerLocationCallback(final HashMap<LatLng,MarkerLocation> ml) {
+        tableMarkers = ml;
         try {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    for (MarkerLocation mloc : ml) {
-                        LatLng latLng = new LatLng(mloc.getLatitude(),mloc.getLongitude());
-                        Marker marker = mMap.addMarker(new MarkerOptions()
-                                .position(latLng)
-                                .title(mloc.getName())
-                                .snippet(res.getStringArray(R.array.index_names)[mloc.getIndex()])
-                                .icon(BitmapDescriptorFactory.defaultMarker(359.0F)));
-                        //TODO: fix marker colors
-                        tableMarkers.put(latLng,marker);
+                    for(HashMap.Entry<LatLng,MarkerLocation> entry : tableMarkers.entrySet()) {
+                        mMap.addMarker(new MarkerOptions()
+                                .position(entry.getKey())
+                                .title(entry.getValue().getName())
+                                .snippet(entry.getValue().getIndexName(res))
+                                .icon(entry.getValue().getIconDescriptor()));
                     }
                 }
             });
@@ -203,8 +201,9 @@ public class MapsActivity extends FragmentActivity implements
             newMarker = mMap.addMarker(new MarkerOptions()
                     .position(latLng)
                     .title(res.getString(R.string.new_marker))
-                    .snippet(res.getStringArray(R.array.index_names)[0])
+                    .snippet(res.getString(R.string.index_lost))
                     .icon(BitmapDescriptorFactory.defaultMarker(359.0F)));
+            // TODO: custom gray marker
             newMarker.showInfoWindow();
             if(newCircle != null) {
                 // Remove any existing circles before creating a new one
@@ -214,7 +213,7 @@ public class MapsActivity extends FragmentActivity implements
                     .center(latLng)
                     .radius(DEF_RADIUS)
                     .strokeColor(Color.GRAY)
-                    .fillColor(Color.GRAY & 0x55FFFFFF));
+                    .fillColor(Color.GRAY & CIRCLE_MASK));
         }
     }
 
@@ -225,60 +224,68 @@ public class MapsActivity extends FragmentActivity implements
             if (newMarker != null) {
                 if (marker.equals(newMarker)) {
                     Log.d(LOG_MAP, "New marker exists, new marker clicked, do nothing");
-                    // Clicking on the new marker does nothing
+                    // Clicking on the new marker updates the drawing only
+                    marker.showInfoWindow();
                 } else {
                     Log.d(LOG_MAP, "New marker exists, existing marker clicked, removing new marker");
                     // Remove the new marker and open the info window for the existing marker
                     newMarker.remove();
                     newMarker = null;
                     infoMarker = marker;
-                    marker.showInfoWindow();
+                    infoMarker.showInfoWindow();
                     if (newCircle != null) {
                         newCircle.remove();
                     }
                     if(infoCircle != null) {
                         infoCircle.remove();
                     }
+                    LatLng latLng = marker.getPosition();
                     infoCircle = mMap.addCircle(new CircleOptions()
-                            .center(marker.getPosition())
-                            .radius(DEF_RADIUS)
-                            .strokeColor(Color.BLUE)
-                            .fillColor(Color.BLUE & 0x55FFFFFF));
-                    //TODO: get radius from list and update colors
+                            .center(latLng)
+                            .radius(tableMarkers.get(latLng).getRadius())
+                            .strokeColor(tableMarkers.get(latLng).getCircleColor())
+                            .fillColor(tableMarkers.get(latLng).getCircleColor() & CIRCLE_MASK));
                 }
             }
             else {
-                Log.d(LOG_MAP, "Existing marker open, closing existing marker, opening new");
-                // Close the existing marker and open the new one
-                infoMarker.hideInfoWindow();
-                infoMarker = marker;
-                marker.showInfoWindow();
-                if(infoCircle != null) {
-                    infoCircle.remove();
+                if(infoMarker.equals(marker)) {
+                    Log.d(LOG_MAP, "Existing marker open, same marker clicked, do nothing");
+                    // Clicking on the same existing marker updates the drawing only
+                    marker.showInfoWindow();
                 }
-                infoCircle = mMap.addCircle(new CircleOptions()
-                        .center(marker.getPosition())
-                        .radius(DEF_RADIUS)
-                        .strokeColor(Color.BLUE)
-                        .fillColor(Color.BLUE & 0x55FFFFFF));
-                //TODO: get radius from list and update colors
+                else {
+                    Log.d(LOG_MAP, "Existing marker open, closing existing marker, opening new");
+                    // Close the existing marker and open the new one
+                    infoMarker.hideInfoWindow();
+                    infoMarker = marker;
+                    infoMarker.showInfoWindow();
+                    if (infoCircle != null) {
+                        infoCircle.remove();
+                    }
+                    LatLng latLng = marker.getPosition();
+                    infoCircle = mMap.addCircle(new CircleOptions()
+                            .center(latLng)
+                            .radius(tableMarkers.get(latLng).getRadius())
+                            .strokeColor(tableMarkers.get(latLng).getCircleColor())
+                            .fillColor(tableMarkers.get(latLng).getCircleColor() & CIRCLE_MASK));
+                }
             }
         }
         else {
             Log.d(LOG_MAP, "No new marker, no existing marker, showing info window");
             // Simply show the info window of an existing marker
             infoOpen = true;
-            marker.showInfoWindow();
             infoMarker = marker;
+            infoMarker.showInfoWindow();
             if(infoCircle != null) {
                 infoCircle.remove();
             }
+            LatLng latLng = marker.getPosition();
             infoCircle = mMap.addCircle(new CircleOptions()
-                    .center(marker.getPosition())
-                    .radius(DEF_RADIUS)
-                    .strokeColor(Color.BLUE)
-                    .fillColor(Color.BLUE & 0x55FFFFFF));
-            //TODO: get radius from list and update colors
+                    .center(latLng)
+                    .radius(tableMarkers.get(latLng).getRadius())
+                    .strokeColor(tableMarkers.get(latLng).getCircleColor())
+                    .fillColor(tableMarkers.get(latLng).getCircleColor() & CIRCLE_MASK));
         }
         return false;
     }
@@ -286,6 +293,29 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onInfoWindowClick(Marker marker) {
         Log.d(LOG_MAP, "Info window click captured!");
+        MarkerDialog md = new MarkerDialog();
+        if(newMarker == null) {
+            md.setExisting(true);
+        }
+        md.registerMarkerDialogCancel(this);
+        md.registerMarkerDialogDelete(this);
+        md.registerMarkerDialogUpdate(this);
+        md.show(getFragmentManager(), "MarkerDialogPopUp");
+    }
 
+    @Override
+    public void markerDialogCancel() {
+        Log.d(LOG_MAP, "Info window cancelled");
+    }
+
+    @Override
+    public void markerDialogDelete() {
+        Log.d(LOG_MAP, "Info window delete requested...");
+
+    }
+
+    @Override
+    public void markerDialogUpdate() {
+        Log.d(LOG_MAP, "Info window create/update requested...");
     }
 }

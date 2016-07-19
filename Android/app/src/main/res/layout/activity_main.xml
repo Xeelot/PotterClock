@@ -24,7 +24,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:id="@+id/buttonMap"
-        android:text="Point Me" />
+        android:text="@string/point_me" />
 
     <Button
         android:layout_width="wrap_content"
@@ -33,5 +33,13 @@
         android:layout_below="@+id/buttonMap"
         android:id="@+id/buttonUser"
         android:text="@string/select_user"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/buttonUser"
+        android:id="@+id/buttonUpdate"
+        android:text="@string/update_location"/>
 
 </RelativeLayout>

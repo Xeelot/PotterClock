@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextView debug;
     private Button mapButton;
     private Button userButton;
+    private Button updateButton;
     private AwsManager awsManager;
     private String selectedUser;
     private Resources res;
@@ -47,12 +48,14 @@ public class MainActivity extends AppCompatActivity implements
         // Find the objects specified in the XML file
         mapButton = (Button)findViewById(R.id.buttonMap);
         userButton = (Button)findViewById(R.id.buttonUser);
+        updateButton = (Button)findViewById(R.id.buttonUpdate);
         debug = (TextView)findViewById(R.id.textMain);
 
         // Set values and listeners on objects
         mapButton.setOnClickListener(this);
         userButton.setOnClickListener(this);
         userButton.setText(selectedUser);
+        updateButton.setOnClickListener(this);
 
         // Grab an instance of the AwsManager
         Log.d(LOG_MAIN, "Calling to get AwsManager...");

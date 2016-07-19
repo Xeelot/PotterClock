@@ -10,23 +10,38 @@
     <string name="enter_marker_name">Enter marker name…</string>
     <string name="radius">Radius:</string>
     <string name="select_user">Select User:</string>
+    <string name="select_location">Select location…</string>
     <string name="select">Select</string>
     <string-array name="user_array">
         <item>Joe</item>
         <item>Hannah</item>
     </string-array>
+    <string name="index_lost">Lost</string>
+    <string name="index_mort">Mortal Peril</string>
+    <string name="index_park">Park</string>
+    <string name="index_texa">Texas</string>
+    <string name="index_holi">Holiday</string>
+    <string name="index_work">Work</string>
+    <string name="index_tran">Transit</string>
+    <string name="index_groc">Grocery</string>
+    <string name="index_flor">Florida</string>
+    <string name="index_pubx">Pub</string>
+    <string name="index_barn">Barn</string>
+    <string name="index_home">Home</string>
+    <string name="point_me">Point Me</string>
+    <string name="update_location">Update Location</string>
     <string-array name="index_names">
-        <item>Lost</item>
-        <item>Mortal Peril</item>
-        <item>Park</item>
-        <item>Texas</item>
-        <item>Holiday</item>
-        <item>Work</item>
-        <item>Transit</item>
-        <item>Grocery</item>
-        <item>Florida</item>
-        <item>Pub</item>
-        <item>Barn</item>
-        <item>Home</item>
+        <item>@string/index_lost</item>
+        <item>@string/index_mort</item>
+        <item>@string/index_park</item>
+        <item>@string/index_texa</item>
+        <item>@string/index_holi</item>
+        <item>@string/index_work</item>
+        <item>@string/index_tran</item>
+        <item>@string/index_groc</item>
+        <item>@string/index_flor</item>
+        <item>@string/index_pubx</item>
+        <item>@string/index_barn</item>
+        <item>@string/index_home</item>
     </string-array>
 </resources>
