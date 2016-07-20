@@ -99,7 +99,6 @@ public class MarkerDialog extends DialogFragment {
         // Set the view, title, and buttons
         builder.setView(view);
         builder.setTitle(R.string.new_marker);
-        //TODO: update the title in onStart
         builder.setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -143,6 +142,7 @@ public class MarkerDialog extends DialogFragment {
                 nameEdit.setText(markerInfo.getName());
                 radiusEdit.setText(String.valueOf(markerInfo.getRadius()));
                 indexType.setSelection(markerInfo.getIndex());
+                ad.setTitle(markerInfo.getName());
             }
             else {
                 deleteButton.setVisibility(View.INVISIBLE);

@@ -226,6 +226,7 @@ public class MainActivity extends AppCompatActivity implements
             if(currentLatLng != null) {
                 for (HashMap.Entry<LatLng, MarkerLocation> entry : markerMap.entrySet()) {
                     // Calculate our phi and theta components for calculating Earth distance
+                    //double distance = SphericalUtil.computeDistanceBetween(currentLatLng, entry.getKey());
                     double phi1 = (DEGREE_90 - currentLatLng.latitude) * PI_OVER_180;
                     double phi2 = (DEGREE_90 - entry.getValue().getLatitude()) * PI_OVER_180;
                     double theta1 = currentLatLng.longitude * PI_OVER_180;

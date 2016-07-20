@@ -245,8 +245,7 @@ public class MapsActivity extends FragmentActivity implements
                     .position(latLng)
                     .title(res.getString(R.string.new_marker))
                     .snippet(res.getString(R.string.index_lost))
-                    .icon(BitmapDescriptorFactory.defaultMarker(359.0F)));
-            // TODO: custom gray marker
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.grey_marker)));
             newMarker.showInfoWindow();
             if(newCircle != null) {
                 // Remove any existing circles before creating a new one

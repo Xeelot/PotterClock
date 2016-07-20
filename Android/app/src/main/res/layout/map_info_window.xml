@@ -10,14 +10,16 @@
         android:id="@+id/textName"
         android:text="@string/new_marker"
         android:gravity="center_horizontal"
-        android:textStyle="bold"/>
+        android:textStyle="bold"
+        android:textSize="14sp"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/textCategory"
-        android:text="Lost"
-        android:gravity="center_horizontal"/>
+        android:text="@string/index_lost"
+        android:gravity="center_horizontal"
+        android:textSize="14sp"/>
 
     <TextView
         android:layout_width="match_parent"
