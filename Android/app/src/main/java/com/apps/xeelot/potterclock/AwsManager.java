@@ -57,6 +57,17 @@ public class AwsManager {
     }
 
 
+    // Interface for responding to CurrentLocation polls
+    interface CurrentUpdateCallback {
+        void currentUpdateCallback(CurrentLocation cl);
+    }
+    CurrentUpdateCallback currentUpdateCallback;
+    void registerCurrentUpdateCallback(CurrentUpdateCallback callback) {
+        Log.d(LOG_AWS, "Current update callback registered.");
+        currentUpdateCallback = callback;
+    }
+
+
     // Interface for responding to MarkerLocation scans
     interface MarkerScanCallback {
         void markerScanCallback();
@@ -139,6 +150,21 @@ public class AwsManager {
         }
         return null;
     }
+    public static void addMapMarker(LatLng key, MarkerLocation value) {
+        if(markersReady) {
+            if(markerMap.containsKey(key)) {
+                markerMap.remove(key);
+            }
+            markerMap.put(key, value);
+        }
+    }
+    public static void removeMapMarker(LatLng key) {
+        if(markersReady) {
+            if(markerMap.containsKey(key)) {
+                markerMap.remove(key);
+            }
+        }
+    }
 
     // Set function that MainActivity will call to keep track of the current user
     public static void setCurrentUser(String user) {
@@ -173,6 +199,7 @@ public class AwsManager {
                 try {
                     mapper.save(cl);
                     Log.d(LOG_AWS, "Current Location update successful!");
+                    currentUpdateCallback.currentUpdateCallback(cl);
                 }
                 catch (AmazonClientException e) {
                     Toast t = Toast.makeText(appContext, "Current Location update failed", Toast.LENGTH_SHORT);

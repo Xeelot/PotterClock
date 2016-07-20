@@ -1,11 +1,15 @@
 package com.apps.xeelot.potterclock;
 
+import android.*;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
@@ -28,6 +32,7 @@ import java.util.HashMap;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
+        ActivityCompat.OnRequestPermissionsResultCallback,
         AwsManager.MarkerScanCallback,
         AwsManager.MarkerDeleteCallback,
         AwsManager.MarkerUpdateCallback,
@@ -49,7 +54,7 @@ public class MapsActivity extends FragmentActivity implements
     private GoogleApiClient mGoogleApiClient;
     private AwsManager awsManager;
     private Resources res;
-    private HashMap<LatLng,MarkerLocation> tableMarkers = null;
+    private HashMap<LatLng, MarkerLocation> tableMarkers = null;
     private boolean markersAdded = false;
     private Marker newMarker = null; // Keep track of new markers not committed yet
     private Circle newCircle = null;
@@ -76,13 +81,15 @@ public class MapsActivity extends FragmentActivity implements
 
         // Gather the resources and static instance of AwsManager
         awsManager = AwsManager.getAwsManager(getApplicationContext());
+        awsManager.registerMarkerDeleteCallback(this);
+        awsManager.registerMarkerUpdateCallback(this);
         // If the markers are ready, grab them
         markersAdded = false;
         if(AwsManager.getMarkerMapReady()) {
             tableMarkers = AwsManager.getMarkerMap();
         }
         else {
-            awsManager.registerMarkerLocationCallback(this);
+            awsManager.registerMarkerScanCallback(this);
         }
         res = getResources();
     }
@@ -120,12 +127,12 @@ public class MapsActivity extends FragmentActivity implements
         Log.d(LOG_MAP, "Google API Client connection successful!");
         try {
             currentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        } catch(SecurityException e) {
+        } catch (SecurityException e) {
             e.printStackTrace();
         }
         if (currentLocation != null) {
             LatLng latlng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 5));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 15));
         }
     }
 
@@ -141,13 +148,13 @@ public class MapsActivity extends FragmentActivity implements
                     addMarkersToMap();
                 }
             });
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void addMarkersToMap() {
-        if(!markersAdded) {
+        if (!markersAdded) {
             markersAdded = true;
             for (HashMap.Entry<LatLng, MarkerLocation> entry : tableMarkers.entrySet()) {
                 mMap.addMarker(new MarkerOptions()
@@ -165,18 +172,36 @@ public class MapsActivity extends FragmentActivity implements
     public void onMapReady(GoogleMap googleMap) {
         Log.d(LOG_MAP, "Map is ready, applying settings...");
         mMap = googleMap;
+        // Check for location permission before calling setupTheMap
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        }
+        else {
+            setupTheMap();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        // Had to request location access, how embarrassing, now setup the map
+        setupTheMap();
+    }
+
+    public void setupTheMap() {
         try {
             mMap.setMyLocationEnabled(true);
         } catch(SecurityException e) {
             Log.e(LOG_MAP, "GPS settings are disabled on device!");
             e.printStackTrace();
         }
+
         UiSettings ui = mMap.getUiSettings();
         ui.setTiltGesturesEnabled(false);
         ui.setIndoorLevelPickerEnabled(false);
         ui.setMapToolbarEnabled(false);
         ui.setZoomControlsEnabled(true);
-        
+
         // Set our custom info window and listeners
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(getLayoutInflater()));
         mMap.setOnInfoWindowClickListener(this);
@@ -314,6 +339,7 @@ public class MapsActivity extends FragmentActivity implements
         MarkerDialog md = new MarkerDialog();
         if(newMarker == null) {
             md.setExisting(true);
+            md.setMarkerInfo(tableMarkers.get(infoMarker.getPosition()));
         }
         md.registerMarkerDialogCancel(this);
         md.registerMarkerDialogDelete(this);
@@ -330,8 +356,8 @@ public class MapsActivity extends FragmentActivity implements
     public void markerDialogDelete(MarkerLocation ml) {
         Log.d(LOG_MAP, "Info window delete requested...");
         // Only infoMarker can be deleted since newMarkers are not in the DB yet
-        ml.setLatitude(infoMarker.getPosition().getLatitude());
-        ml.setLongitude(infoMarker.getPosition().getLongitude());
+        ml.setLatitude(infoMarker.getPosition().latitude);
+        ml.setLongitude(infoMarker.getPosition().longitude);
         awsManager.deleteMarker(ml);
     }
 
@@ -340,12 +366,12 @@ public class MapsActivity extends FragmentActivity implements
         Log.d(LOG_MAP, "Info window create/update requested...");
         // Should receive name, radius, and index from dialog. Need to add lat/long
         if(newMarker != null) {
-            ml.setLatitude(newMarker.getPosition().getLatitude());
-            ml.setLongitude(newMarker.getPosition().getLongitude());
+            ml.setLatitude(newMarker.getPosition().latitude);
+            ml.setLongitude(newMarker.getPosition().longitude);
         }
         else {
-            ml.setLatitude(infoMarker.getPosition().getLatitude());
-            ml.setLongitude(infoMarker.getPosition().getLongitude());
+            ml.setLatitude(infoMarker.getPosition().latitude);
+            ml.setLongitude(infoMarker.getPosition().longitude);
         }
         awsManager.updateMarker(ml);
     }
@@ -353,28 +379,58 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void markerDeleteCallback() {
         Log.d(LOG_MAP, "Marker deleted response from AWS");
-        infoMarker.remove();
-        infoCircle.remove();
-        infoMarker = null;
-        infoCircle = null;
+        try {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(tableMarkers.containsKey(infoMarker.getPosition())) {
+                        tableMarkers.remove(infoMarker.getPosition());
+                        AwsManager.removeMapMarker(infoMarker.getPosition());
+                    }
+                    infoMarker.remove();
+                    infoCircle.remove();
+                    infoMarker = null;
+                    infoCircle = null;
+                    infoOpen = false;
+                }
+            });
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void markerUpdateCallback(MarkerLocation ml) {
+    public void markerUpdateCallback(final MarkerLocation ml) {
         Log.d(LOG_MAP, "Marker updated response from AWS");
-        if(newMarker != null) {
-            // Delete the "new marker" and create a new "info marker"
-            infoMarker = newMarker;
-            infoCircle = newCircle;
-            newMarker = null;
-            newCircle = null;
+        try {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // If item exists, delete and replace with updated item, otherwise create
+                    LatLng latLng = new LatLng(ml.getLatitude(), ml.getLongitude());
+                    if(tableMarkers.containsKey(latLng)) {
+                        tableMarkers.remove(latLng);
+                    }
+                    tableMarkers.put(latLng, ml);
+                    AwsManager.addMapMarker(latLng, ml);
+                    if(newMarker != null) {
+                        // Delete the "new marker" and create a new "info marker"
+                        infoMarker = newMarker;
+                        infoCircle = newCircle;
+                        newMarker = null;
+                        newCircle = null;
+                    }
+                    infoMarker.setTitle(ml.getName());
+                    infoMarker.setSnippet(ml.getIndexName(res));
+                    infoMarker.setIcon(ml.getIconDescriptor());
+                    infoMarker.showInfoWindow();
+                    infoCircle.setRadius(ml.getRadius());
+                    infoCircle.setStrokeColor(ml.getCircleColor());
+                    infoCircle.setFillColor(ml.getCircleColor() & CIRCLE_MASK);
+                }
+            });
+        } catch(Exception e) {
+            e.printStackTrace();
         }
-        infoMarker.setTitle(ml.getName());
-        infoMarker.setSnippet(ml.getIndexName(res));
-        infoMarker.setIcon(ml.getIconDescriptor());
-        infoMarker.showInfoWindow();
-        infoCircle.setRadius(ml.getRadius());
-        infoCircle.setStrokeColor(ml.getCircleColor());
-        infoCircle.setFillColor(ml.getCircleColor() & CIRCLE_MASK);
     }
 }

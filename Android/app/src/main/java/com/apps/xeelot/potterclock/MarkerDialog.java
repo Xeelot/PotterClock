@@ -16,10 +16,15 @@ import android.widget.Spinner;
 public class MarkerDialog extends DialogFragment {
 
     private boolean existing = false;
+    private MarkerLocation markerInfo = null;
 
     public void setExisting(boolean exists) {
         existing = exists;
     }
+    public void setMarkerInfo(MarkerLocation ml) {
+        markerInfo = ml;
+    }
+
 
     // Interface for retrieving an asynchronous create/update Marker
     interface MarkerDialogUpdate {
@@ -134,8 +139,10 @@ public class MarkerDialog extends DialogFragment {
 
             // Customize the buttons based on existing vs new knowledge
             if(existing) {
-
                 posButton.setText(R.string.update);
+                nameEdit.setText(markerInfo.getName());
+                radiusEdit.setText(String.valueOf(markerInfo.getRadius()));
+                indexType.setSelection(markerInfo.getIndex());
             }
             else {
                 deleteButton.setVisibility(View.INVISIBLE);
@@ -172,8 +179,8 @@ public class MarkerDialog extends DialogFragment {
                         ad.dismiss();
                         MarkerLocation ml = new MarkerLocation();
                         ml.setIndex(indexType.getSelectedItemPosition());
-                        ml.setName(nameEdit.getText().toString());
-                        ml.setRadius(Integer.parseInt(radiusEdit.getText().toString()));
+                        ml.setName(nameEdit.getText().toString().trim());
+                        ml.setRadius(Integer.parseInt(radiusEdit.getText().toString().trim()));
                         markerDialogUpdate.markerDialogUpdate(ml);
                     }
                 }
