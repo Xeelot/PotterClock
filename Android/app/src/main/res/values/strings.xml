@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PotterClock</string>
+    <string name="app_name">Potter Clock</string>
     <string name="title_activity_maps">Map</string>
     <string name="create">Create</string>
     <string name="update">Update</string>

@@ -7,14 +7,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.location.Location;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.ImageView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -43,10 +43,11 @@ public class MainActivity extends AppCompatActivity implements
     private final double MILE2METER = 1609.344;
 
     // Initialize local variables and objects we want to keep track of
-    private TextView debug;
     private Button mapButton;
     private Button userButton;
     private Button updateButton;
+    private ImageView imageJoe;
+    private ImageView imageHannah;
     private AwsManager awsManager;
     private GoogleApiClient mGoogleApiClient;
     private HashMap<LatLng,MarkerLocation> markerMap;
@@ -71,7 +72,14 @@ public class MainActivity extends AppCompatActivity implements
         mapButton = (Button)findViewById(R.id.buttonMap);
         userButton = (Button)findViewById(R.id.buttonUser);
         updateButton = (Button)findViewById(R.id.buttonUpdate);
-        debug = (TextView)findViewById(R.id.textMain);
+        imageJoe = (ImageView)findViewById(R.id.imageJoeHands);
+        imageHannah = (ImageView)findViewById(R.id.imageHanHands);
+
+        // Attempt to adjust the imageview based on screen size...
+        //DisplayMetrics displayMetrics = new DisplayMetrics();
+        //getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        //int width = displayMetrics.widthPixels;
+        //int height = displayMetrics.heightPixels;
 
         // Set values and listeners on objects
         mapButton.setOnClickListener(this);
@@ -146,28 +154,19 @@ public class MainActivity extends AppCompatActivity implements
 
     // Response from AWS with a current location
     @Override
-    public void currentLocationCallback(final CurrentLocation cl) {
+    public void currentLocationCallback(CurrentLocation cl) {
         Log.d(LOG_MAIN, "Current location callback received!");
-        try {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if(userMap.containsKey(cl.getUserid())) {
-                        userMap.remove(cl.getUserid());
-                    }
-                    userMap.put(cl.getUserid(), cl);
-                    debug.setText(cl.getUserid());
-                }
-            });
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+        handleLocationCallback(cl);
     }
 
     // Response from AWS after updating a location
     @Override
-    public void currentUpdateCallback(final CurrentLocation cl) {
+    public void currentUpdateCallback(CurrentLocation cl) {
         Log.d(LOG_MAIN, "Current update callback received!");
+        handleLocationCallback(cl);
+    }
+
+    public void handleLocationCallback(final CurrentLocation cl) {
         try {
             runOnUiThread(new Runnable() {
                 @Override
@@ -176,7 +175,12 @@ public class MainActivity extends AppCompatActivity implements
                         userMap.remove(cl.getUserid());
                     }
                     userMap.put(cl.getUserid(), cl);
-                    debug.setText(cl.getUserid() + " updated!");
+                    if(cl.getUserid().equals(res.getString(R.string.user_joe))) {
+                        imageJoe.setBackground(cl.getHandDrawable(res));
+                    }
+                    else if(cl.getUserid().equals(res.getString(R.string.user_hannah))) {
+                        imageHannah.setBackground(cl.getHandDrawable(res));
+                    }
                 }
             });
         } catch(Exception e) {
@@ -226,7 +230,6 @@ public class MainActivity extends AppCompatActivity implements
             if(currentLatLng != null) {
                 for (HashMap.Entry<LatLng, MarkerLocation> entry : markerMap.entrySet()) {
                     // Calculate our phi and theta components for calculating Earth distance
-                    //double distance = SphericalUtil.computeDistanceBetween(currentLatLng, entry.getKey());
                     double phi1 = (DEGREE_90 - currentLatLng.latitude) * PI_OVER_180;
                     double phi2 = (DEGREE_90 - entry.getValue().getLatitude()) * PI_OVER_180;
                     double theta1 = currentLatLng.longitude * PI_OVER_180;

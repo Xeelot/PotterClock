@@ -1,6 +1,5 @@
 package com.apps.xeelot.potterclock;
 
-import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;

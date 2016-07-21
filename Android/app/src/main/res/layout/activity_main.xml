@@ -3,43 +3,75 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.apps.xeelot.potterclock.MainActivity">
     <!--android:background="@drawable/scroll_background"-->
 
-    <TextView
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/imageBackground"
+        android:scaleType="centerCrop"
+        android:background="@mipmap/background"/>
+
+    <!--TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:paddingTop="100dp"
         android:id="@+id/textMain"
-        android:text="Hello World!"/>
+        android:text="Hello World!"/-->
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="350dp"
+        android:id="@+id/imageJoeHands"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/joe0"/>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="350dp"
+        android:id="@+id/imageHanHands"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/joe0"/>
 
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="160dp"
+        android:layout_height="65dp"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:id="@+id/buttonMap"
-        android:text="@string/point_me" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/buttonMap"
-        android:id="@+id/buttonUser"
-        android:text="@string/select_user"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/buttonUser"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="15dp"
         android:id="@+id/buttonUpdate"
-        android:text="@string/update_location"/>
+        android:text="@string/update_location"
+        android:textColor="@color/black"
+        android:background="@drawable/parch_button"/>
+
+    <Button
+        android:layout_width="130dp"
+        android:layout_height="55dp"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/buttonUpdate"
+        android:layout_marginBottom="5dp"
+        android:id="@+id/buttonUser"
+        android:text="@string/select_user"
+        android:textColor="@color/black"
+        android:background="@drawable/parch_button"/>
+
+    <Button
+        android:layout_width="130dp"
+        android:layout_height="55dp"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/buttonUser"
+        android:layout_marginBottom="5dp"
+        android:id="@+id/buttonMap"
+        android:text="@string/point_me"
+        android:textColor="@color/black"
+        android:background="@drawable/parch_button"/>
 
 </RelativeLayout>
